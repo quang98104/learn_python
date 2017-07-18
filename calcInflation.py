@@ -17,6 +17,6 @@ Amount = get_value("   How much is the monthly budget in today's dollars?       
 Period = get_value("   How long is the period to calculate inflation effect?    ")
 Rate = get_value("   What's the expected inflation rate?                      ")
 
-x = inflation_calc(Amount, Period, Rate)
-print "\nAt {}% inflation rate, the original ${} budget should grow, annually compounded, to:".format(Rate, int(Amount))
+x = inflation_calc(Amount, Period, Rate, 'yes')
 x.annual_calc()
+#print "\nAt {}% inflation rate, the original ${} budget should grow, annually compounded, to:".format(Rate, int(Amount))
