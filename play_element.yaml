@@ -1,0 +1,38 @@
+---
+- name: update testbed info on each element
+  gather_facts: False
+  hosts: elements
+
+  vars: 
+    loclDirScr: /home/autotester/automation/script
+    loclDirAns: /home/autotester/ansible
+    rmotDirScr: /config/script
+    
+  pre_tasks:
+    - name: delete local files
+      local_action: "shell rm {{ loclDirAns }}/tmp/*"
+      run_once: true
+    - name: copy testbed_info.zone into testbed_info
+      local_action: "shell cp {{ loclDirScr }}/element/shell/testbed_info/testbed_info.zone {{ loclDirAns }}/tmp/testbed_info"
+      run_once: true
+    - name: copy get_elem_info.sh to all element
+      copy: src="{{ loclDirScr }}/element/shell/get_elem_info.sh" dest="{{ rmotDirScr }}/." mode="u=rwx"
+
+  tasks:
+    - name: run get_elem_info.sh to update element info
+      shell: "{{ rmotDirScr }}/get_elem_info.sh"
+    - name: fetch elem_info from element
+      fetch: src="{{ rmotDirScr }}/sys_info/elem_info" dest="{{ loclDirAns }}/tmp/elem_info-{{ inventory_hostname }}" flat=yes
+      notify: "update testbed"
+
+  post_tasks:
+    - name: remove current element from testbed_info
+      local_action: "shell cat {{ loclDirAns }}/tmp/testbed_info | grep -v {{ inventory_hostname }} > {{ loclDirAns }}/tmp/testbed_info.{{ inventory_hostname }}"
+    - name: copy testbed_info to all elements
+      copy: src="{{ loclDirAns }}/tmp/testbed_info.{{ inventory_hostname }}" dest="{{ rmotDirScr }}/sys_info/testbed_info"
+
+  handlers:
+    - name: update testbed_info
+      local_action: "shell cat {{ loclDirAns }}/tmp/elem_info-{{ inventory_hostname }} >> {{ loclDirAns }}/tmp/testbed_info"
+      listen: "update testbed"
+...
