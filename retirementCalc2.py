@@ -12,22 +12,28 @@ import sys
 from classCalcValue import *
 from classInflationCalc import *
 
-### 1. basic intervew
-currentAge                    = 46
+### 1. basic interview; make change to fit your situation
+currentAge                    = 35
 retirementAge                 = 65
 retirementPeriod              = 40
 # retirement savings
-currentRetirementSaving       = 290000.00
-monthlyRetirementContribution = 2200.00
-retirementContributionPeriod  = 6
+currentRetirementSaving       = 100000.00
+monthlyRetirementContribution = 1500.00
+retirementContributionPeriod  = 15
 # perional savings
-currentPersonalSaving         = 270000.00
+currentPersonalSaving         = 50000.00
 monthlyPeronalContribution    = 300.00
-personalContributionPeriod    = 6
+personalContributionPeriod    = 20
 # interest and tax assumption before retirement
 interestRateBefore            = 5.00
 compoundIntervalBefore        = 4         # compound interval: monthly(12), quarterly(4), semi-annually(2), annually(1)
 taxRateBefore                 = 5.00
+# interest, inflation, and tax assumption during retirement
+interestRate                  = 3.00      # being conservative as we'd want to invest in something safe like treasury in order to avoid volatility
+compoundInterval              = 2         # compound interval: monthly(12), quarterly(4), semi-annually(2), annually(1)
+RetirementTaxRate             = 15.00     # in retirement, earn less thus tax less
+Inflation                     = 2.00      # inflation rate per year; calcalate starting today and compounded annually
+todayBudget                   = 3000.00   # retirement monthly widthdrwal in today's dollar ammount; need to account for inflation
 #
 yrsToRetirement         = retirementAge - currentAge
 totalYears              = yrsToRetirement + retirementPeriod
@@ -46,7 +52,6 @@ def calc_saving(myString, payTax, savingPeriod, Principal=0, Contribution=0, Int
             thisPrincipal = myFutureValue - myTax
             taxPaid = myTax + taxPaid
             #print "This year principal grows to ${}".format(myFutureValue)
-
     print "\n-----------   {}   -----------".format(myString)
     print "Future value in {} yrs:             ${}".format(int(savingPeriod), round(myFutureValue, 2))
     if payTax == "yes":
@@ -55,7 +60,7 @@ def calc_saving(myString, payTax, savingPeriod, Principal=0, Contribution=0, Int
     return myFutureValue
 
 print "\nSo you have {} years to prepare for your retirement.".format(yrsToRetirement)
-
+# 2. saving period, retirement accounts: calculate future value of retirement savings after accumulation period
 myPersonalSaving = myRetirementSaving = 0
 myRetirementSaving = calc_saving("Retirement Accumulation Period", payTax="no", savingPeriod=retirementContributionPeriod, Principal=currentRetirementSaving, Contribution=monthlyRetirementContribution)
 
@@ -79,13 +84,6 @@ totalSavings = myRetirementSaving + myPersonalSaving
 taxPortion = myRetirementSaving / totalSavings
 
 ### 6. retirement period: calculate how long savings lasts based monthly amount, inflation, and duration
-# interest, inflation, and tax assumption during retirement
-interestRate                  = 3.00      # being conservative as we'd want to invest in something safe like treasury in order to avoid volatility
-compoundInterval              = 2         # compound interval: monthly(12), quarterly(4), semi-annually(2), annually(1)
-RetirementTaxRate             = 15.00     # in retirement, earn less thus tax less
-Inflation                     = 2.00      # inflation rate per year; calcalate starting today and compounded annually
-todayBudget                   = 3000.00   # retirement monthly widthdrwal in today's dollar ammount; need to account for inflation
-
 print "OK. Let's get to retirement!\n"
 print "This is the assumption going into retirement:"
 print "Retirement savings:         {}".format(round(totalSavings, 2))
