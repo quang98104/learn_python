@@ -7,39 +7,36 @@ code flows:
    4. saving period, personal accounts: calculate future value of personal savings after accumulation period; need to account for tax annually
    5. interest-earning period, personal account: if accumulation period ends before retirement starts, calculate interest earn and its tax
    6. retirement period: calculate how long savings lasts based monthly amount, inflation, and duration
-
-To-do:
-   a. need to implement #3 -> DONE
-   b. on #3, still need to factor in tax -> DONE
-   c. need to implement #5 -> DONE
-   d. on #6, need to account for annual tax on withdrawals
-   e. on #6, withdrawing on personal savings has no tax consequence since tax was paid
-   f. improve inflation by starting inflation calculation now - not at retirement
 '''
 import sys
 from classCalcValue import *
 from classInflationCalc import *
 
-myPersonalSaving = myRetirementSaving = 0
-def get_value(myPrompt):
-    while True:
-        try:
-            myValue = float(input(myPrompt))
-        except Exception:
-            print "Please enter correct value or simple 0"
-            continue
-        else:
-            break
-    return myValue
+### 1. basic intervew
+currentAge                    = 46
+retirementAge                 = 65
+retirementPeriod              = 40
+# retirement savings
+currentRetirementSaving       = 290000.00
+monthlyRetirementContribution = 2200.00
+retirementContributionPeriod  = 6
+# perional savings
+currentPersonalSaving         = 270000.00
+monthlyPeronalContribution    = 300.00
+personalContributionPeriod    = 6
+# interest and tax assumption before retirement
+interestRateBefore            = 5.00
+compoundIntervalBefore        = 4         # compound interval: monthly(12), quarterly(4), semi-annually(2), annually(1)
+taxRateBefore                 = 5.00
+#
+yrsToRetirement         = retirementAge - currentAge
+totalYears              = yrsToRetirement + retirementPeriod
 
-def calc_saving(myString, payTax, savingPeriod, Principal=0, Contribution=0):
-    Interest =     get_value("   What interest rate you think you can get?              ")
-    Interval = int(get_value("   Compound interval - mo(12), qtr(4), bi-yr(2), yr(1):   "))
+def calc_saving(myString, payTax, savingPeriod, Principal=0, Contribution=0, Interest=5.00, Interval=4, taxRate=0.00):
     x=rate_calc(Principal, Interest, savingPeriod, Interval, Contribution)
     myFutureValue = x.calc_compound_contrib()
     if payTax == "yes":
         taxPaid = 0.0
-        taxRate =  get_value("   On interest earned, what tax rate ?                   ")
         thisPrincipal = Principal
         for i in range(0, savingPeriod):
             x=rate_calc(thisPrincipal, Interest, 1.0, Interval, Contribution)
@@ -53,67 +50,47 @@ def calc_saving(myString, payTax, savingPeriod, Principal=0, Contribution=0):
     print "\n-----------   {}   -----------".format(myString)
     print "Future value in {} yrs:             ${}".format(int(savingPeriod), round(myFutureValue, 2))
     if payTax == "yes":
-       print "Total tax paid:                    ${}".format(taxPaid)
+       print "Total tax paid:                     ${}".format(taxPaid)
     print "-----------\n"
     return myFutureValue
 
-### 1. basic intervew
-ageCurrent =        int(get_value("How old are you now?                             "))
-ageRetire =         int(get_value("How old when you want to retire?                 "))
-retirementPeriod =  int(get_value("Estimate retirement period in yrs:               "))
-yrsToRetirement = ageRetire - ageCurrent
-totalYears = yrsToRetirement + retirementPeriod
-print "\n\nSo you have {} years to prepare for your retirement.".format(yrsToRetirement)
+print "\nSo you have {} years to prepare for your retirement.".format(yrsToRetirement)
 
-### 2. saving period, retirement accounts: calculate future value of retirement savings after accumulation 
-print "\nLet's work on saving for your retirement. In this period, you actively make contribution to your retirement tax free."
-print "   The base principal is the initial contribution and/or the amount currently in your retirement account."
-myPrincipal =       get_value("   How much is the base principal?                         ")
-contribPeriod = int(get_value("   How many years is the saving period?                    "))
-myContribution =    get_value("   How much do you want to contribute per month?           ")
-myRetirementSaving = calc_saving("Retirement Accumulation Period", "no", contribPeriod, myPrincipal, myContribution)
+myPersonalSaving = myRetirementSaving = 0
+myRetirementSaving = calc_saving("Retirement Accumulation Period", payTax="no", savingPeriod=retirementContributionPeriod, Principal=currentRetirementSaving, Contribution=monthlyRetirementContribution)
 
 ### 3. interest-earning period, retirement account: if accumulation period ends before retirement starts, calculate interest earn
-contribPeriod = yrsToRetirement - contribPeriod
+contribPeriod = yrsToRetirement - retirementContributionPeriod
 if contribPeriod > 0:
     myPrincipal = myRetirementSaving
     print "You still have {} years until retirement during which you can still earn interest on ${} saved.\n".format(contribPeriod, int(myRetirementSaving))
-    myRetirementSaving = calc_saving("Retirement Interest-earning Period", "no", contribPeriod, myPrincipal)
+    myRetirementSaving = calc_saving("Retirement Interest-earning Period", "no", savingPeriod=contribPeriod, Principal=myPrincipal)
 
 ### 4. saving period, personal accounts: calculate future value of personal savings after accumulation period; need to account for tax annually
-hasPersonal =           raw_input("Do you have personal savings? yes or no:        ")
-myPersonalSaving = 0
-if hasPersonal == 'yes':
-    print "Let's work on the accumulation period of your personal savings during which you actively make contribution."
-    hasTax =            raw_input("   Do you want to account for annual tax? yes or no:      ")
-    print "   The base principal is the initial contribution or amount you have currently in your personal account if any."
-    myPrincipal =       get_value("   How much is the base principal?                        ")
-    contribPeriod = int(get_value("   How many years is the accumulation period?             "))
-    myContribution =    get_value("   How much do you want to contribute per month?          ")
-    myPersonalSaving = calc_saving("Personal Accumulation Period", hasTax, contribPeriod, myPrincipal, myContribution)
-    ### 5. interest-earning period, personal account: if accumulation period ends before retirement starts, calculate interest earn and its tax
-    contribPeriod = yrsToRetirement - contribPeriod
-    if contribPeriod > 0:
-        myPrincipal = myPersonalSaving
-        print "You still have {} years until retirement during which you can still earn interest on ${} saved.\n".format(contribPeriod, int(myPersonalSaving))
-        hasTax =            raw_input("   Do you want to account for annual tax? yes or no:      ")
-        myPersonalSaving = calc_saving("Retirement Interest-earning Period", hasTax, contribPeriod, myPrincipal)
+myPersonalSaving = calc_saving("Personal Accumulation Period", payTax="yes", taxRate=taxRateBefore, savingPeriod=personalContributionPeriod, Principal=currentPersonalSaving, Contribution=monthlyPeronalContribution)
+contribPeriod = yrsToRetirement - personalContributionPeriod
+if contribPeriod > 0:
+    myPrincipal = myPersonalSaving
+    print "You still have {} years until retirement during which you can still earn interest on ${} saved.\n".format(contribPeriod, int(myPersonalSaving))
+    myPersonalSaving = calc_saving("Retirement Interest-earning Period", payTax="yes", taxRate=taxRateBefore, savingPeriod=contribPeriod, Principal=myPersonalSaving)
     
 totalSavings = myRetirementSaving + myPersonalSaving
 # calculate tax portion of total savings since tax paid on personal saving already
 taxPortion = myRetirementSaving / totalSavings
 
 ### 6. retirement period: calculate how long savings lasts based monthly amount, inflation, and duration
+# interest, inflation, and tax assumption during retirement
+interestRate                  = 3.00      # being conservative as we'd want to invest in something safe like treasury in order to avoid volatility
+compoundInterval              = 2         # compound interval: monthly(12), quarterly(4), semi-annually(2), annually(1)
+RetirementTaxRate             = 15.00     # in retirement, earn less thus tax less
+Inflation                     = 2.00      # inflation rate per year; calcalate starting today and compounded annually
+todayBudget                   = 3000.00   # retirement monthly widthdrwal in today's dollar ammount; need to account for inflation
+
 print "OK. Let's get to retirement!\n"
 print "This is the assumption going into retirement:"
 print "Retirement savings:         {}".format(round(totalSavings, 2))
 print "Retirement period:          {} yrs".format(retirementPeriod)
 print "\nBe advised that your retirement savings, representing {}% of total savings, is taxable when withdraw.".format(int(taxPortion * 100))
-todayBudget =   get_value("   During retirement, how much do you expect to withdraw per month from your savings:     ")
-Inflation =     get_value("   Expected inflation rate in %:                                                          ")
-taxRate =       get_value("   During retirement, what's the expected tax rate?                                       ")
-Interest =      get_value("   During retirement, what's the expected interest rate %:                                ")
-Interval =  int(get_value("   And compound interval - mo(12), qtr(4), bi-yr(2), yr(1):                               "))
 y = inflation_calc(todayBudget, yrsToRetirement, Inflation)
 myInflatedMonthlyBudget = y.annual_calc()
 print "\nYour retirement monthly budget is based on today's dollar. So we will account for inflation starting todays."
@@ -139,13 +116,15 @@ def yearly_calc(myPrincipal, myBudget, Interval, Interest):
         myPrincipal = intervalSavings + intervalInterest
     return intervalSavings
 print ""
+thisSaving = totalSavings
+avgMonthlyBudgetList = [budgetMonthly]
 for i in range(0, retirementPeriod):
     myYear = i + 1
-    yearlySavings = yearly_calc(totalSavings, budgetMonthly)
+    yearlySavings = yearly_calc(totalSavings, budgetMonthly, compoundInterval, interestRate)
     totalSavings = yearlySavings
     yearlyWithdrawals = budgetMonthly * 12
     taxableAmount = yearlyWithdrawals * taxPortion
-    taxBill = taxableAmount * (taxRate/100)
+    taxBill = taxableAmount * (RetirementTaxRate/100)
     print "In year {}:".format(myYear)
     print "   Each month, you can withdraw from your retirement savings:            ${}".format(round(budgetMonthly, 2))
     print "   Which means your yearly income is:                                    ${}".format(round(yearlyWithdrawals, 2))
@@ -155,7 +134,7 @@ for i in range(0, retirementPeriod):
     print "\n-----------------------------------------------------------------------------------------\n"
     #account for inflation
     budgetMonthly = budgetMonthly * (1 + (Inflation/100))
-      avgMonthlyBudgetList.append(budgetMonthly)
+    avgMonthlyBudgetList.append(budgetMonthly)
     if totalSavings < 0:
         negtiveYear = myYear - 1
         avgMonthlyBudget = sum(avgMonthlyBudgetList)/len(avgMonthlyBudgetList)
@@ -172,3 +151,6 @@ for i in range(0, retirementPeriod):
         print "   Average Monthly withdrawal:              ${}".format(int(avgMonthlyBudget))
         print "   Interest rate and compound interval:     {}%, {}".format(interestRate, compoundInterval)
         print "Your savings of ${} will outlast you!!\n".format(int(thisSaving))
+
+
+
